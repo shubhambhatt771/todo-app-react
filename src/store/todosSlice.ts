@@ -13,6 +13,7 @@ export type updateTodoPayloadType = {
     id: number;
     title: string;
     completed: boolean;
+    index: number
 }
   type TodosState = {
     todos: TodoType[];
@@ -43,7 +44,7 @@ export const addTodo = createAsyncThunk<TodoType, NewTodoType>('todos/addTodo', 
     return addedTodo;
 });
 
-export const updateTodo = createAsyncThunk('todos/updateTodo', async ({id,title, completed}:updateTodoPayloadType)=>{
+export const updateTodo = createAsyncThunk('todos/updateTodo', async ({id,title, completed, index})=>{
     const res = await fetch('https://jsonplaceholder.typicode.com/todos/'+id,{
         method: 'PATCH',
         body:JSON.stringify({
@@ -56,9 +57,8 @@ export const updateTodo = createAsyncThunk('todos/updateTodo', async ({id,title,
         }
     });
 
-    const updatedTodo = res.json();
-
-    return updatedTodo;
+    const updatedTodo = await res.json();
+    return {...updatedTodo, index};
 });
 
 export const deleteTodo = createAsyncThunk<number, number>('todos/deleteTodo', async (todoId)=>{
@@ -83,10 +83,7 @@ const todosSlice = createSlice({
             state.todos.unshift(action.payload);
         })
         builder.addCase(updateTodo.fulfilled, (state, action)=>{
-            const updatedTodoIdx = state.todos.findIndex((todo) => todo.title === action.payload.title);
-            if(updatedTodoIdx !== -1){
-                state.todos[updatedTodoIdx]['completed'] = action.payload.completed;
-            }
+                state.todos[action.payload.index] = action.payload;
         })
 
         builder.addCase(deleteTodo.fulfilled, (state, action)=>{
