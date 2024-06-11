@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { TodoType, addTodo, deleteTodo, fetchTodos, updateTodo } from './store/todosSlice';
+import { NewTodoType, TodoType, addTodo, deleteTodo, fetchTodos, updateTodo } from './store/todosSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from './store';
 import './App.css';
@@ -8,7 +8,7 @@ const App = () => {
   const [isEdit, setIsEdit] = useState(false);
   const todos: TodoType[] = useSelector((state: RootState) => state.todos.todos);
   const dispatch: AppDispatch = useDispatch();
-  const todoToUpdate = useRef(null);
+  const todoToUpdate = useRef<TodoType | null>(null);
   useEffect(() => {
     dispatch(fetchTodos());
   }, [dispatch]);
@@ -19,17 +19,19 @@ const App = () => {
       updateTodoItem();
     }
     else if (input.trim()) {
-      const data = { userId: 1, title: input, completed: false };
+      const data: NewTodoType = { userId: 1, title: input, completed: false, index: null };
 
       dispatch(addTodo(data));
     }
     setInput('');
   };
 
-  const toggleComplete = async (todo: TodoType, index) => {
+  const toggleComplete = async (todo: TodoType, index: number) => {
     const data = {
-      ...todo,
+      title: todo.title,
+      id: todo.id,
       completed: !todo.completed,
+      userId: todo.userId,
       index
     };
     await dispatch(updateTodo(data));
@@ -39,20 +41,26 @@ const App = () => {
     dispatch(deleteTodo(todoId));
   };
 
-  const editTodoItem = (todo, index) => {
+  const editTodoItem = (todo: TodoType) => {
     setInput(todo.title);
     setIsEdit(true);
-    todoToUpdate.current = { ...todo, index };
+    todoToUpdate.current = todo;
   }
 
   const updateTodoItem = async () => {
-    const todo = todoToUpdate.current;
+    if (todoToUpdate.current !== null) {
 
-    const data = {
-      ...todo,
-      title: input,
-    };
-    await dispatch(updateTodo(data));
+      const todo: TodoType = todoToUpdate.current;
+
+      const data = {
+        id: todo.id,
+        title: input,
+        index: todo.index,
+        completed: todo.completed,
+        userId: todo.userId
+      };
+      await dispatch(updateTodo(data));
+    }
     setIsEdit(false);
   }
 
@@ -75,9 +83,9 @@ const App = () => {
             isEdit && <><i className='fa fa-edit mr-3'>
             </i>
               <>
-              Update
+                Update
               </>
-              </>
+            </>
           }
           {
             !isEdit && <><i className='fa fa-plus mr-3'>
@@ -107,7 +115,7 @@ const App = () => {
                 <i className='fas fa-trash' />
               </button>
               <button
-                onClick={() => editTodoItem(todo, index)}
+                onClick={() => editTodoItem({ ...todo, index })}
                 className="text-blue-500 hover:text-blue-700 ml-3"
               >
                 <i className='fas fa-edit' />

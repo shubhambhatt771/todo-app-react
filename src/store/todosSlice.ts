@@ -4,6 +4,7 @@ export type TodoType = {
     userId: number;
     title: string;
     completed: boolean;
+    index: number | null;
   }
 
 export type NewTodoType = Omit<TodoType, "id">;
@@ -28,12 +29,10 @@ export const fetchTodos = createAsyncThunk('todos/fetchTodos', async()=>{
     return todos;
 });
 // <returnType, parameterType> to function call
-export const addTodo = createAsyncThunk<TodoType, NewTodoType>('todos/addTodo', async (data)=>{
+export const addTodo = createAsyncThunk<TodoType, NewTodoType>('todos/addTodo', async (data:NewTodoType)=>{
     const res = await fetch('https://jsonplaceholder.typicode.com/todos/',{
         method: 'POST',
-        body:JSON.stringify({
-            ...data
-          }),
+        body:JSON.stringify(data),
         headers:{
             'Content-Type': 'application/json'
         }
@@ -44,7 +43,7 @@ export const addTodo = createAsyncThunk<TodoType, NewTodoType>('todos/addTodo', 
     return addedTodo;
 });
 
-export const updateTodo = createAsyncThunk('todos/updateTodo', async ({id,title, completed, index})=>{
+export const updateTodo = createAsyncThunk('todos/updateTodo', async ({id,title, completed, index}:TodoType)=>{
     const res = await fetch('https://jsonplaceholder.typicode.com/todos/'+id,{
         method: 'PATCH',
         body:JSON.stringify({
